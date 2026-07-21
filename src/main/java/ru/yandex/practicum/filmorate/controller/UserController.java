@@ -25,9 +25,15 @@ public class UserController {
 
     @PostMapping
     public User create(@Valid @RequestBody User user) {
-        if (user.getEmail() == null || user.getEmail().isBlank() || !user.getEmail().contains("@")) {
-            throw new ValidationException("Email должен быть указан и содержать @.");
+        if (isValidUser(user)) {
+            user.setId(getNextId());
+            users.put(user.getId(), user);
+            log.info("Создан пользователь {}.", user.getName());
         }
+        return user;
+    }
+
+    private boolean isValidUser(User user) throws ValidationException {
         if (user.getLogin() == null || user.getLogin().isBlank() || user.getLogin().contains(" ")) {
             throw new ValidationException("Логин должен быть указан и не содержать пробелов.");
         }
@@ -44,10 +50,7 @@ public class UserController {
         if (user.getBirthday().isAfter(LocalDate.now())) {
             throw new ValidationException("Дата рождения не может быть в будущем.");
         }
-        user.setId(getNextId());
-        users.put(user.getId(), user);
-        log.info("Создан пользователь {}.", user.getName());
-        return user;
+        return true;
     }
 
     private long getNextId() {

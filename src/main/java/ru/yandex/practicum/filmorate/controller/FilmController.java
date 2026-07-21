@@ -23,7 +23,15 @@ public class FilmController {
 
     @PostMapping
     public Film create(@RequestBody Film film) {
+        if (isValidFilm(film)) {
+            film.setId(getNextId());
+            films.put(film.getId(), film);
+            log.info("Создан {} фильм.", film.getName());
+        }
+        return film;
+    }
 
+    private boolean isValidFilm(Film film) throws ValidationException {
         if (film.getName() == null || film.getName().isBlank()) {
             throw new ValidationException("Имя не может быть пустым.");
         }
@@ -36,10 +44,7 @@ public class FilmController {
         if (film.getDuration() <= 0) {
             throw new ValidationException("Продолжительность фильма - не положительное число.");
         }
-        film.setId(getNextId());
-        films.put(film.getId(), film);
-        log.info("Создан {} фильм.", film.getName());
-        return film;
+        return true;
     }
 
     private long getNextId() {
@@ -53,7 +58,7 @@ public class FilmController {
 
     @PutMapping
     public Film update(@RequestBody Film newFilm) {
-        // проверяем необходимые условия
+
         if (newFilm.getId() == null) {
             throw new ValidationException("Id должен быть указан");
         }
