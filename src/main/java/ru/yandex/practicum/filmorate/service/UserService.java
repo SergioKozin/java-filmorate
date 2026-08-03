@@ -15,15 +15,31 @@ public class UserService {
         this.userStorage = userStorage;
     }
 
-    public Optional<User> addFriend(Long id, Long friendId) {
-        userStorage.findUserById(id).orElseThrow().getFriends().add(friendId);
-        return userStorage.findUserById(id);
+    public Collection<User> findAll() {
+        return userStorage.findAll();
     }
 
-    public Optional<User> deleteFriend(Long id, Long friendId) {
+    public User create(User user) {
+        return userStorage.create(user);
+    }
+
+    public User update(User newUser) {
+        return userStorage.update(newUser);
+    }
+
+    public User findUserById(long id) {
+        return userStorage.findUserById(id).orElseThrow();
+    }
+
+    public User addFriend(Long id, Long friendId) {
+        userStorage.findUserById(id).orElseThrow().getFriends().add(friendId);
+        return userStorage.findUserById(id).orElseThrow();
+    }
+
+    public User deleteFriend(Long id, Long friendId) {
         userStorage.findUserById(id).orElseThrow().getFriends().remove(friendId);
         userStorage.findUserById(friendId).orElseThrow().getFriends().remove(id);
-        return userStorage.findUserById(id);
+        return userStorage.findUserById(id).orElseThrow();
     }
 
     public Collection<User> findAllFriends(Long id) {

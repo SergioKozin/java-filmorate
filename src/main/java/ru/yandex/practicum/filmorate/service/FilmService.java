@@ -6,7 +6,6 @@ import ru.yandex.practicum.filmorate.storage.FilmStorage;
 import ru.yandex.practicum.filmorate.storage.UserStorage;
 
 import java.util.Collection;
-import java.util.Optional;
 
 @Service
 public class FilmService {
@@ -18,16 +17,32 @@ public class FilmService {
         this.userStorage = userStorage;
     }
 
-    public Optional<Film> addLike(Long id, Long userId) {
-        userStorage.findUserById(userId).orElseThrow();
-        filmStorage.findFilmById(id).orElseThrow().getLikes().add(userId);
-        return filmStorage.findFilmById(id);
+    public Collection<Film> findAll() {
+        return filmStorage.findAll();
     }
 
-    public Optional<Film> deleteLike(Long id, Long userId) {
+    public Film create(Film film) {
+        return filmStorage.create(film);
+    }
+
+    public Film update(Film newFilm) {
+        return filmStorage.update(newFilm);
+    }
+
+    public Film findFilmById(long id) {
+        return filmStorage.findFilmById(id).orElseThrow();
+    }
+
+    public Film addLike(Long id, Long userId) {
+        userStorage.findUserById(userId).orElseThrow();
+        filmStorage.findFilmById(id).orElseThrow().getLikes().add(userId);
+        return filmStorage.findFilmById(id).orElseThrow();
+    }
+
+    public Film deleteLike(Long id, Long userId) {
         userStorage.findUserById(userId).orElseThrow();
         filmStorage.findFilmById(id).orElseThrow().getLikes().remove(userId);
-        return filmStorage.findFilmById(id);
+        return filmStorage.findFilmById(id).orElseThrow();
     }
 
     public Collection<Film> findPopularFilms(Long count) {
