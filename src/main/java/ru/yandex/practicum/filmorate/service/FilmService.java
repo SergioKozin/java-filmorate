@@ -58,8 +58,8 @@ public class FilmService {
                                     (rs, rowNum) -> {
                                         Like like = new Like();
                                         like.setId(rs.getLong("like_id"));
-                                        like.setFilm_id(rs.getLong("film_id"));
-                                        like.setUser_id(rs.getLong("user_id"));
+                                        like.setFilmId(rs.getLong("film_id"));
+                                        like.setUserId(rs.getLong("user_id"));
                                         return like;
                                     }, film.getId()))
                     );
@@ -166,8 +166,8 @@ public class FilmService {
                         (rs, rowNum) -> {
                             Like like = new Like();
                             like.setId(rs.getLong("like_id"));
-                            like.setFilm_id(rs.getLong("film_id"));
-                            like.setUser_id(rs.getLong("user_id"));
+                            like.setFilmId(rs.getLong("film_id"));
+                            like.setUserId(rs.getLong("user_id"));
                             return like;
                         }, film.getId()))
         );
