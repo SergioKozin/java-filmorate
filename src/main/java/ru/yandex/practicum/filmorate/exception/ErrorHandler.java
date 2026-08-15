@@ -38,4 +38,10 @@ public class ErrorHandler {
     public ErrorResponse handle(final NullPointerException e) {
         return new ErrorResponse(e.getMessage());
     }
+
+    @ExceptionHandler(DuplicatedDataException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponse handle(final DuplicatedDataException e) {
+        return new ErrorResponse(e.getMessage());
+    }
 }
