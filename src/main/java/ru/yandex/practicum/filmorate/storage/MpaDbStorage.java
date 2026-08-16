@@ -18,15 +18,16 @@ public class MpaDbStorage {
     private final JdbcTemplate jdbcTemplate;
     private final MpaRowMapper mpaRowMapper;
 
+    private static final String FIND_ALL_MPA = "SELECT * FROM mpa";
+    private static final String FIND_MPA_BY_ID = "SELECT * FROM mpa WHERE id = ?";
+
     public Collection<Mpa> findAll() {
-        String query = "SELECT * FROM mpa";
-        return jdbcTemplate.query(query, mpaRowMapper);
+        return jdbcTemplate.query(FIND_ALL_MPA, mpaRowMapper);
     }
 
     public Optional<Mpa> findMpaById(Long id) {
-        String query = "SELECT * FROM mpa WHERE mpa_id = ?";
         try {
-            Mpa result = jdbcTemplate.queryForObject(query, mpaRowMapper, id);
+            Mpa result = jdbcTemplate.queryForObject(FIND_MPA_BY_ID, mpaRowMapper, id);
             return Optional.ofNullable(result);
         } catch (EmptyResultDataAccessException ignored) {
             return Optional.empty();

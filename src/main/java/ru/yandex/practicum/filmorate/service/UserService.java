@@ -44,51 +44,45 @@ public class UserService {
     }
 
     public User addFriend(Long userId, Long friendId) {
-        if (userStorage.findUserById(userId).isPresent()) {
-            if (userStorage.findUserById(friendId).isPresent()) {
-                try {
-                    jdbcTemplate.update(
-                            INSERT_FRIEND_QUERY,
-                            userId,
-                            friendId
-                    );
-                } catch (DataAccessException e) {
-                    throw new ValidationException(e.getMessage());
-                }
-            } else {
-                throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
+        if (isUserPresent(userId) && isUserPresent(friendId)) {
+            try {
+                jdbcTemplate.update(
+                        INSERT_FRIEND_QUERY,
+                        userId,
+                        friendId
+                );
+            } catch (DataAccessException e) {
+                throw new ValidationException(e.getMessage());
             }
-        } else {
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
         }
-
-
         return findUserById(userId);
     }
 
     public User deleteFriend(Long userId, Long friendId) {
-        if (userStorage.findUserById(userId).isPresent()) {
-            if (userStorage.findUserById(friendId).isPresent()) {
-                try {
-                    jdbcTemplate.update(
-                            DELETE_FRIEND_QUERY,
-                            userId,
-                            friendId
-                    );
-                } catch (DataAccessException e) {
-                    throw new ValidationException(e.getMessage());
-                }
-            } else {
-                throw new NotFoundException("Пользователь с id = " + friendId + " не найден");
+        if (isUserPresent(userId) && isUserPresent(friendId)) {
+            try {
+                jdbcTemplate.update(
+                        DELETE_FRIEND_QUERY,
+                        userId,
+                        friendId
+                );
+            } catch (DataAccessException e) {
+                throw new ValidationException(e.getMessage());
             }
-        } else {
-            throw new NotFoundException("Пользователь с id = " + userId + " не найден");
         }
+
         return findUserById(userId);
     }
 
+    public Boolean isUserPresent(Long userId) {
+        userStorage.findUserById(userId)
+                .orElseThrow(() ->
+                        new NotFoundException("Пользователь с id = " + userId + " не найден"));
+        return true;
+    }
+
     public Collection<User> findAllFriends(Long userId) {
-        if (userStorage.findUserById(userId).isPresent()) {
+        if (isUserPresent(userId)) {
             try {
                 return new HashSet<>(jdbcTemplate.query(FIND_ALL_FRIENDS_QUERY,
                         (rs, rowNum) -> findUserById(rs.getLong("friend_id")), userId));

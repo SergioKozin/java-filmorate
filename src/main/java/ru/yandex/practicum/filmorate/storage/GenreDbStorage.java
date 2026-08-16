@@ -17,16 +17,16 @@ import java.util.Optional;
 public class GenreDbStorage {
     private final JdbcTemplate jdbcTemplate;
     private final GenreRowMapper genreRowMapper;
+    private static final String FIND_ALL_GENRES = "SELECT * FROM genres";
+    private static final String FIND_GENRE_BY_ID = "SELECT * FROM genres WHERE id = ?";
 
     public Collection<Genre> findAll() {
-        String query = "SELECT * FROM genres";
-        return jdbcTemplate.query(query, genreRowMapper);
+        return jdbcTemplate.query(FIND_ALL_GENRES, genreRowMapper);
     }
 
     public Optional<Genre> findGenreById(Long id) {
-        String query = "SELECT * FROM genres WHERE genre_id = ?";
         try {
-            Genre result = jdbcTemplate.queryForObject(query, genreRowMapper, id);
+            Genre result = jdbcTemplate.queryForObject(FIND_GENRE_BY_ID, genreRowMapper, id);
             return Optional.ofNullable(result);
         } catch (EmptyResultDataAccessException ignored) {
             return Optional.empty();

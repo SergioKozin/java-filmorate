@@ -29,8 +29,8 @@ public class FilmDbStorage implements FilmStorage {
     private static final String INSERT_FILM_QUERY = "INSERT INTO films(film_name, description, release_date, " +
             "duration, mpa) VALUES (?, ?, ?, ?, ?)";
     private static final String UPDATE_FILM_QUERY = "UPDATE films SET film_name = ?, description = ?, " +
-            "release_date = ?, duration = ?, mpa = ? WHERE film_id = ?";
-    private static final String FIND_FILM_BY_ID_QUERY = "SELECT * FROM films WHERE film_id = ?";
+            "release_date = ?, duration = ?, mpa = ? WHERE id = ?";
+    private static final String FIND_FILM_BY_ID_QUERY = "SELECT * FROM films WHERE id = ?";
 
     @Override
     public Collection<Film> findAll() {

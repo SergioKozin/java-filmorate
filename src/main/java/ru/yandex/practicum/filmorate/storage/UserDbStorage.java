@@ -27,13 +27,13 @@ public class UserDbStorage implements UserStorage {
     private final JdbcTemplate jdbcTemplate;
     private final UserRowMapper userRowMapper;
     private static final String FIND_ALL_QUERY = "SELECT * FROM users";
-    private static final String FIND_BY_ID_QUERY = "SELECT * FROM users WHERE user_id = ?";
+    private static final String FIND_BY_ID_QUERY = "SELECT * FROM users WHERE id = ?";
     private static final String FIND_ALL_FRIENDS_QUERY = "SELECT friend_id FROM friendship WHERE user_id = ?";
     private static final String INSERT_USER_QUERY = "INSERT INTO users(email, login, user_name, birthday)" +
             "VALUES (?, ?, ?, ?)";
     private static final String FIND_LOGIN = "SELECT count(*) FROM users WHERE login = ?";
     private static final String UPDATE_QUERY = "UPDATE users SET user_name = ?, email = ?, " +
-            "login = ?, birthday = ? WHERE user_id = ?";
+            "login = ?, birthday = ? WHERE id = ?";
 
     @Override
     public Collection<User> findAll() {
