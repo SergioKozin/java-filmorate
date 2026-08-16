@@ -25,7 +25,8 @@ public class FilmMapper {
             "WHERE film_id = ? ORDER BY genre_id ASC";
     private static final String FIND_GENRE_QUERY = "SELECT * FROM genres WHERE id = ?";
     private static final String FIND_MPA_QUERY = "SELECT * FROM mpa WHERE id = ?";
-@Autowired
+
+    @Autowired
     public FilmMapper(JdbcTemplate jdbcTemplate, GenreRowMapper genreRowMapper, MpaRowMapper mpaRowMapper) {
         this.jdbcTemplate = jdbcTemplate;
         this.genreRowMapper = genreRowMapper;
