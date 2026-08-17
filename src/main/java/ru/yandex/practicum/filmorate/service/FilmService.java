@@ -1,6 +1,7 @@
 package ru.yandex.practicum.filmorate.service;
 
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import ru.yandex.practicum.filmorate.exception.NotFoundException;
@@ -8,25 +9,43 @@ import ru.yandex.practicum.filmorate.exception.ValidationException;
 import ru.yandex.practicum.filmorate.mappers.FilmMapper;
 import ru.yandex.practicum.filmorate.model.Film;
 import ru.yandex.practicum.filmorate.model.FilmDto;
+import ru.yandex.practicum.filmorate.model.Genre;
+import ru.yandex.practicum.filmorate.model.Like;
 import ru.yandex.practicum.filmorate.storage.FilmStorage;
+import ru.yandex.practicum.filmorate.storage.mappers.GenreRowMapper;
+import ru.yandex.practicum.filmorate.storage.mappers.MpaRowMapper;
 
 import java.time.LocalDate;
 import java.util.Collection;
+import java.util.HashSet;
+import java.util.NoSuchElementException;
+import java.util.Objects;
 
 @Service
 public class FilmService {
     private final FilmStorage filmStorage;
-
+    private final GenreRowMapper genreRowMapper;
+    private final MpaRowMapper mpaRowMapper;
     private final JdbcTemplate jdbcTemplate;
     private final FilmMapper filmMapper;
 
     private static final String INSERT_GENRES_QUERY = "INSERT INTO genres_of_film (film_id, genre_id) VALUES (?, ?)";
     private static final String INSERT_LIKE_QUERY = "INSERT INTO likes (film_id, user_id) VALUES (?, ?)";
     private static final String DELETE_LIKE_QUERY = "DELETE FROM likes WHERE film_id = ? AND user_id = ?";
+    private static final String FIND_ALL_LIKES_QUERY = "SELECT * FROM likes WHERE film_id = ?";
+    private static final String FIND_ALL_GENRES_QUERY = "SELECT * FROM genres_of_film " +
+            "WHERE film_id = ? ORDER BY genre_id ASC";
+    private static final String FIND_GENRE_QUERY = "SELECT * FROM genres WHERE id = ?";
+    private static final String FIND_MPA_QUERY = "SELECT * FROM mpa WHERE id = ?";
+    private static final String FIND_POPULAR_FILMS_QUERY = "SELECT film_id FROM likes " +
+            "GROUP BY film_id ORDER BY COUNT(*) DESC LIMIT ?";
 
-    public FilmService(@Qualifier("FilmDbStorage") FilmStorage filmStorage,
-                       JdbcTemplate jdbcTemplate, FilmMapper filmMapper) {
+    public FilmService(@Qualifier("FilmDbStorage") FilmStorage filmStorage, GenreRowMapper genreRowMapper,
+                       MpaRowMapper mpaRowMapper, JdbcTemplate jdbcTemplate,
+                       FilmMapper filmMapper) {
         this.filmStorage = filmStorage;
+        this.genreRowMapper = genreRowMapper;
+        this.mpaRowMapper = mpaRowMapper;
         this.jdbcTemplate = jdbcTemplate;
         this.filmMapper = filmMapper;
     }
@@ -34,7 +53,37 @@ public class FilmService {
     public Collection<FilmDto> findAll() {
 
         return filmStorage.findAll().stream()
-                .map(filmMapper::mapToDto)
+                .map(film -> {
+                    FilmDto filmDto = filmMapper.mapToDto(film);
+                    filmDto.setLikes(
+                            new HashSet<>(jdbcTemplate.query(FIND_ALL_LIKES_QUERY,
+                                    (rs, rowNum) -> {
+                                        Like like = new Like();
+                                        like.setId(rs.getLong("id"));
+                                        like.setFilmId(rs.getLong("film_id"));
+                                        like.setUserId(rs.getLong("user_id"));
+                                        return like;
+                                    }, film.getId()))
+                    );
+                    filmDto.setGenres(
+                            new HashSet<>(jdbcTemplate.query(FIND_ALL_GENRES_QUERY,
+                                    (rs, rowNum) -> {
+                                        Genre genre = new Genre();
+                                        genre.setId(rs.getInt("genre_id"));
+                                        genre.setName(Objects.requireNonNull(jdbcTemplate.queryForObject(
+                                                FIND_GENRE_QUERY,
+                                                genreRowMapper,
+                                                genre.getId()
+                                        )).getName());
+                                        return genre;
+                                    }, film.getId())));
+                    filmDto.setMpa(Objects.requireNonNull(
+                            jdbcTemplate.queryForObject(
+                                    FIND_MPA_QUERY,
+                                    mpaRowMapper,
+                                    film.getMpa().getId())));
+                    return filmDto;
+                })
                 .toList();
     }
 
@@ -96,7 +145,35 @@ public class FilmService {
     }
 
     public FilmDto findFilmById(long id) {
-        return filmMapper.mapToDto(filmStorage.findFilmById(id).orElseThrow());
+        Film film = filmStorage.findFilmById(id).orElseThrow();
+        FilmDto filmDto = filmMapper.mapToDto(film);
+        filmDto.setLikes(
+                new HashSet<>(jdbcTemplate.query(FIND_ALL_LIKES_QUERY,
+                        (rs, rowNum) -> {
+                            Like like = new Like();
+                            like.setId(rs.getLong("id"));
+                            like.setFilmId(rs.getLong("film_id"));
+                            like.setUserId(rs.getLong("user_id"));
+                            return like;
+                        }, film.getId())));
+        filmDto.setGenres(
+                new HashSet<>(jdbcTemplate.query(FIND_ALL_GENRES_QUERY,
+                        (rs, rowNum) -> {
+                            Genre genre = new Genre();
+                            genre.setId(rs.getInt("genre_id"));
+                            genre.setName(Objects.requireNonNull(jdbcTemplate.queryForObject(
+                                    FIND_GENRE_QUERY,
+                                    genreRowMapper,
+                                    genre.getId()
+                            )).getName());
+                            return genre;
+                        }, film.getId())));
+        filmDto.setMpa(Objects.requireNonNull(
+                jdbcTemplate.queryForObject(
+                        FIND_MPA_QUERY,
+                        mpaRowMapper,
+                        film.getMpa().getId())));
+        return filmDto;
     }
 
     public FilmDto addLike(Long filmId, Long userId) {
@@ -118,12 +195,14 @@ public class FilmService {
     }
 
     public Collection<FilmDto> findPopularFilms(Long count) {
-        return findAll().stream()
-                .sorted((f1, f2) -> Integer.compare(
-                        f2.getLikes().size(),
-                        f1.getLikes().size()
-                ))
-                .limit(count)
-                .toList();
+        try {
+            return jdbcTemplate.query(FIND_POPULAR_FILMS_QUERY,
+                            (rs, rowNum) -> rs.getLong("film_id"), count)
+                    .stream()
+                    .map(this::findFilmById)
+                    .toList();
+        } catch (EmptyResultDataAccessException ignored) {
+            throw new NoSuchElementException();
+        }
     }
 }
